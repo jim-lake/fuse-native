@@ -644,6 +644,15 @@ class Fuse extends Nanoresource {
   errno (code) {
     return (code && Fuse[code.toUpperCase()]) || -1
   }
+
+  invalidatePath (path, cb) {
+    try {
+      binding.fuse_native_invalidate_path(path, this._thread)
+    } catch (err) {
+      return cb(err)
+    }
+    return cb(null)
+  }
 }
 
 Fuse.EPERM = -1

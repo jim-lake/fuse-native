@@ -900,6 +900,17 @@ NAPI_METHOD(fuse_native_unmount) {
 
   return NULL;
 }
+NAPI_METHOD(fuse_native_invalidate_path) {
+  NAPI_ARGV(2)
+  NAPI_ARGV_UTF8(path, 1024, 0);
+  NAPI_ARGV_BUFFER_CAST(fuse_thread_t *, ft, 1);
+
+  if (ft != NULL && ft->mounted) {
+    fuse_invalidate_path(ft->fuse, path);
+  }
+
+  return NULL;
+}
 
 NAPI_INIT() {
   const napi_node_version* version;
@@ -915,6 +926,7 @@ NAPI_INIT() {
 
   NAPI_EXPORT_FUNCTION(fuse_native_mount)
   NAPI_EXPORT_FUNCTION(fuse_native_unmount)
+  NAPI_EXPORT_FUNCTION(fuse_native_invalidate_path)
 
   NAPI_EXPORT_FUNCTION(fuse_native_signal_getattr)
   NAPI_EXPORT_FUNCTION(fuse_native_signal_init)

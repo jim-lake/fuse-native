@@ -48,6 +48,14 @@ const ops = {
         uid: process.getuid ? process.getuid() : 0,
         gid: process.getgid ? process.getgid() : 0
       })
+    } else if (path === '/invalidate') {
+      cb(Fuse.ENOENT)
+
+      setImmediate(() => {
+        fuse.invalidatePath('/', (err) => {
+          console.log("invalidated /, err:", err);
+        });
+      });
     }
 
     return process.nextTick(cb, Fuse.ENOENT)

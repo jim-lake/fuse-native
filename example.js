@@ -46,7 +46,8 @@ const ops = {
         size: 12,
         mode: 33188,
         uid: process.getuid ? process.getuid() : 0,
-        gid: process.getgid ? process.getgid() : 0
+        gid: process.getgid ? process.getgid() : 0,
+        flags: 2,
       })
     } else if (path === '/invalidate') {
       cb(Fuse.ENOENT)
@@ -73,7 +74,7 @@ const ops = {
   }
 }
 
-const fuse = new Fuse('./mnt', ops, { debug: true, displayFolder: true })
+const fuse = new Fuse('./mnt', ops, { debug: false, displayFolder: true })
 fuse.mount(err => {
   if (err) throw err
   console.log('filesystem mounted on ' + fuse.mnt)

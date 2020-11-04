@@ -224,6 +224,7 @@ static void populate_stat (uint32_t *ints, struct stat* stat) {
   uint32s_to_timespec(&stat->st_mtim, &ints);
   uint32s_to_timespec(&stat->st_ctim, &ints);
 #endif
+  stat->st_flags = *ints++;
 }
 
 static void populate_statvfs (uint32_t *ints, struct statvfs* statvfs) {

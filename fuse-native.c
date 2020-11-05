@@ -112,6 +112,9 @@ static const uint32_t op_link = 30;
 static const uint32_t op_symlink = 31;
 static const uint32_t op_mkdir = 32;
 static const uint32_t op_rmdir = 33;
+static const uint32_t op_setattr_x = 34;
+
+#define HANDLER_COUNT 36
 
 // Data structures
 
@@ -123,7 +126,7 @@ typedef struct {
   napi_ref malloc;
 
   // Operation handlers
-  napi_ref handlers[35];
+  napi_ref handlers[HANDLER_COUNT];
 
   struct fuse *fuse;
   struct fuse_chan *ch;
@@ -170,6 +173,7 @@ typedef struct {
   // Stat + Statfs
   struct stat *stat;
   struct statvfs *statvfs;
+  struct setattr_x *attr_x;
 
   // Readdir
   fuse_fill_dir_t readdir_filler;
@@ -263,6 +267,70 @@ FUSE_METHOD(getattr, 1, 1, (const char *path, struct stat *stat), {
   populate_stat(ints, l->stat);
 })
 
+FUSE_METHOD_VOID(setattr_x, 17, 1, (const char *path, struct setattr_x *attr_x), {
+  l->path = path;
+  l->attr_x = attr_x;
+}, {
+  napi_create_string_utf8(env, l->path, NAPI_AUTO_LENGTH, &(argv[2]));
+
+  if (SETATTR_WANTS_MODE(l->attr_x)) {
+    napi_create_uint32(env, l->attr_x->mode, &(argv[3]));
+  } else {
+    napi_get_undefined(env, &(argv[3]));
+  }
+  if (SETATTR_WANTS_UID(l->attr_x)) {
+    napi_create_uint32(env, l->attr_x->uid, &(argv[4]));
+  } else {
+    napi_get_undefined(env, &(argv[4]));
+  }
+  if (SETATTR_WANTS_GID(l->attr_x)) {
+    napi_create_uint32(env, l->attr_x->gid, &(argv[5]));
+  } else {
+    napi_get_undefined(env, &(argv[5]));
+  }
+  if (SETATTR_WANTS_FLAGS(l->attr_x)) {
+    napi_create_uint32(env, l->attr_x->flags, &(argv[6]));
+  } else {
+    napi_get_undefined(env, &(argv[6]));
+  }
+  if (SETATTR_WANTS_SIZE(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(l->attr_x->size, 7);
+  } else {
+    napi_get_undefined(env, &(argv[7]));
+    napi_get_undefined(env, &(argv[8]));
+  }
+  if (SETATTR_WANTS_MODTIME(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(timespec_to_uint64(&l->attr_x->modtime), 9);
+  } else {
+    napi_get_undefined(env, &(argv[9]));
+    napi_get_undefined(env, &(argv[10]));
+  }
+  if (SETATTR_WANTS_ACCTIME(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(timespec_to_uint64(&l->attr_x->acctime), 11);
+  } else {
+    napi_get_undefined(env, &(argv[11]));
+    napi_get_undefined(env, &(argv[12]));
+  }
+  if (SETATTR_WANTS_CRTIME(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(timespec_to_uint64(&l->attr_x->crtime), 13);
+  } else {
+    napi_get_undefined(env, &(argv[13]));
+    napi_get_undefined(env, &(argv[14]));
+  }
+  if (SETATTR_WANTS_CHGTIME(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(timespec_to_uint64(&l->attr_x->chgtime), 15);
+  } else {
+    napi_get_undefined(env, &(argv[15]));
+    napi_get_undefined(env, &(argv[16]));
+  }
+  if (SETATTR_WANTS_BKUPTIME(l->attr_x)) {
+    FUSE_UINT64_TO_INTS_ARGV(timespec_to_uint64(&l->attr_x->bkuptime), 17);
+  } else {
+    napi_get_undefined(env, &(argv[17]));
+    napi_get_undefined(env, &(argv[18]));
+  }
+})
+
 FUSE_METHOD(fgetattr, 2, 1, (const char *path, struct stat *stat, struct fuse_file_info *info), {
   l->path = path;
   l->stat = stat;
@@ -344,7 +412,7 @@ FUSE_METHOD_VOID(utimens, 5, 0, (const char *path, const struct timespec tv[2]),
 }, {
   napi_create_string_utf8(env, l->path, NAPI_AUTO_LENGTH, &(argv[2]));
   FUSE_UINT64_TO_INTS_ARGV(l->atime, 3)
-  FUSE_UINT64_TO_INTS_ARGV(l->atime, 5)
+  FUSE_UINT64_TO_INTS_ARGV(l->mtime, 5)
 })
 
 FUSE_METHOD_VOID(release, 2, 0, (const char *path, struct fuse_file_info *info), {
@@ -802,7 +870,7 @@ NAPI_METHOD(fuse_native_mount) {
   napi_value handlers = argv[5];
   NAPI_ARGV_BUFFER_CAST(uint32_t *, implemented, 6)
 
-  for (int i = 0; i < 35; i++) {
+  for (int i = 0; i < HANDLER_COUNT; i++) {
     ft->handlers[i] = NULL;
   }
 
@@ -846,6 +914,7 @@ NAPI_METHOD(fuse_native_mount) {
   if (implemented[op_mkdir]) ops.mkdir = fuse_native_mkdir;
   if (implemented[op_rmdir]) ops.rmdir = fuse_native_rmdir;
   if (implemented[op_init]) ops.init = fuse_native_init;
+  if (implemented[op_setattr_x]) ops.setattr_x = fuse_native_setattr_x;
 
   int _argc = (strcmp(mntopts, "-o") <= 0) ? 1 : 2;
   char *_argv[] = {
@@ -963,6 +1032,7 @@ NAPI_INIT() {
   NAPI_EXPORT_FUNCTION(fuse_native_signal_symlink)
   NAPI_EXPORT_FUNCTION(fuse_native_signal_mkdir)
   NAPI_EXPORT_FUNCTION(fuse_native_signal_rmdir)
+  NAPI_EXPORT_FUNCTION(fuse_native_signal_setattr_x)
 
   NAPI_EXPORT_UINT32(op_getattr)
   NAPI_EXPORT_UINT32(op_init)
@@ -999,4 +1069,5 @@ NAPI_INIT() {
   NAPI_EXPORT_UINT32(op_symlink)
   NAPI_EXPORT_UINT32(op_mkdir)
   NAPI_EXPORT_UINT32(op_rmdir)
+  NAPI_EXPORT_UINT32(op_setattr_x)
 }

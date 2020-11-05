@@ -1,5 +1,7 @@
 const Fuse = require('./')
 
+let g_flags = 2;
+
 const ops = {
   readdir: function (path, cb) {
     console.log('readdir(%s)', path)
@@ -47,7 +49,7 @@ const ops = {
         mode: 33188,
         uid: process.getuid ? process.getuid() : 0,
         gid: process.getgid ? process.getgid() : 0,
-        flags: 2,
+        flags: g_flags,
       })
     } else if (path === '/invalidate') {
       cb(Fuse.ENOENT)
@@ -60,6 +62,13 @@ const ops = {
     }
 
     return process.nextTick(cb, Fuse.ENOENT)
+  },
+  setattr_x: function(path, mode, uid, gid, size, modtime, acctime, crtime, chgtime, bktime, flags, cb) {
+    console.log('setattr_x:', mode, uid, gid, size, modtime, acctime, crtime, chgtime, bktime, flags);
+    if (flags !== undefined) {
+      g_flags = flags;
+    }
+    return process.nextTick(cb, 0);
   },
   open: function (path, flags, cb) {
     console.log('open(%s, %d)', path, flags)

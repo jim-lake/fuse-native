@@ -128,7 +128,10 @@ const OpcodesAndDefaults = new Map([
   }],
   ['rmdir', {
     op: binding.op_rmdir
-  }]
+  }],
+  ['setattr_x', {
+    op: binding.op_setattr_x
+  }],
 ])
 
 class Fuse extends Nanoresource {
@@ -631,6 +634,21 @@ class Fuse extends Nanoresource {
     })
   }
 
+  _op_setattr_x (signal, path, mode, uid, gid, flags, sizeLow, sizeHigh,
+    modtimeLow, modtimeHigh, acctimeLow, acctimeHigh, crtimeLow, crtimeHigh,
+    chgtimeLow, chgtimeHigh, bktimeLow, bktimeHigh) {
+    const size = getDoubleArg(sizeLow, sizeHigh)
+    const modtime = getDoubleArg(modtimeLow, modtimeHigh)
+    const acctime = getDoubleArg(acctimeLow, acctimeHigh)
+    const crtime = getDoubleArg(crtimeLow, crtimeHigh)
+    const chgtime = getDoubleArg(chgtimeLow, chgtimeHigh)
+    const bktime = getDoubleArg(bktimeLow, bktimeHigh)
+
+    this.ops.setattr_x(path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime, err => {
+      return signal(err)
+    })
+  }
+
   // Public API
 
   mount (cb) {
@@ -813,7 +831,11 @@ function setDoubleInt (arr, idx, num) {
 }
 
 function getDoubleArg (a, b) {
-  return a + b * 4294967296
+  if (a === undefined) {
+    return undefined;
+  } else {
+    return a + b * 4294967296
+  }
 }
 
 function toDateMS (st) {

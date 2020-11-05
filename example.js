@@ -63,8 +63,8 @@ const ops = {
 
     return process.nextTick(cb, Fuse.ENOENT)
   },
-  setattr_x: function(path, mode, uid, gid, size, modtime, acctime, crtime, chgtime, bktime, flags, cb) {
-    console.log('setattr_x:', mode, uid, gid, size, modtime, acctime, crtime, chgtime, bktime, flags);
+  setattr_x: function(path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime, cb) {
+    console.log('setattr_x:', path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime);
     if (flags !== undefined) {
       g_flags = flags;
     }

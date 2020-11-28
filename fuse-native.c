@@ -924,7 +924,8 @@ NAPI_METHOD(fuse_native_mount) {
   if (implemented[op_mkdir]) ops.mkdir = fuse_native_mkdir;
   if (implemented[op_rmdir]) ops.rmdir = fuse_native_rmdir;
   if (implemented[op_init]) ops.init = fuse_native_init;
-  if (implemented[op_setattr_x]) ops.chflags = fuse_native_chflags;
+  if (implemented[op_setattr_x]) ops.setattr_x = fuse_native_setattr_x;
+  if (implemented[op_chflags]) ops.chflags = fuse_native_chflags;
 
   int _argc = (strcmp(mntopts, "-o") <= 0) ? 1 : 2;
   char *_argv[] = {

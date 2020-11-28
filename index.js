@@ -165,7 +165,7 @@ class Fuse extends Nanoresource {
   }
 
   _getImplementedArray () {
-    const implemented = new Uint32Array(35)
+    const implemented = new Uint32Array(OpcodesAndDefaults.size)
     for (const impl of this._implemented) {
       implemented[impl] = 1
     }

@@ -113,8 +113,9 @@ static const uint32_t op_symlink = 31;
 static const uint32_t op_mkdir = 32;
 static const uint32_t op_rmdir = 33;
 static const uint32_t op_setattr_x = 34;
+static const uint32_t op_chflags = 35;
 
-#define HANDLER_COUNT 36
+#define HANDLER_COUNT 37
 
 // Data structures
 
@@ -169,6 +170,7 @@ typedef struct {
   size_t size;
   uint32_t position;
   int flags;
+  uint32_t chflag_flags;
 
   // Stat + Statfs
   struct stat *stat;
@@ -267,7 +269,7 @@ FUSE_METHOD(getattr, 1, 1, (const char *path, struct stat *stat), {
   populate_stat(ints, l->stat);
 })
 
-FUSE_METHOD_VOID(setattr_x, 17, 1, (const char *path, struct setattr_x *attr_x), {
+FUSE_METHOD_VOID(setattr_x, 17, 0, (const char *path, struct setattr_x *attr_x), {
   l->path = path;
   l->attr_x = attr_x;
 }, {
@@ -329,6 +331,14 @@ FUSE_METHOD_VOID(setattr_x, 17, 1, (const char *path, struct setattr_x *attr_x),
     napi_get_undefined(env, &(argv[17]));
     napi_get_undefined(env, &(argv[18]));
   }
+})
+
+FUSE_METHOD_VOID(chflags, 2, 0, (const char *path, uint32_t chflag_flags), {
+  l->path = path;
+  l->chflag_flags = chflag_flags;
+}, {
+  napi_create_string_utf8(env, l->path, NAPI_AUTO_LENGTH, &(argv[2]));
+  napi_create_uint32(env, l->chflag_flags, &(argv[3]));
 })
 
 FUSE_METHOD(fgetattr, 2, 1, (const char *path, struct stat *stat, struct fuse_file_info *info), {
@@ -914,7 +924,7 @@ NAPI_METHOD(fuse_native_mount) {
   if (implemented[op_mkdir]) ops.mkdir = fuse_native_mkdir;
   if (implemented[op_rmdir]) ops.rmdir = fuse_native_rmdir;
   if (implemented[op_init]) ops.init = fuse_native_init;
-  if (implemented[op_setattr_x]) ops.setattr_x = fuse_native_setattr_x;
+  if (implemented[op_setattr_x]) ops.chflags = fuse_native_chflags;
 
   int _argc = (strcmp(mntopts, "-o") <= 0) ? 1 : 2;
   char *_argv[] = {
@@ -1033,6 +1043,7 @@ NAPI_INIT() {
   NAPI_EXPORT_FUNCTION(fuse_native_signal_mkdir)
   NAPI_EXPORT_FUNCTION(fuse_native_signal_rmdir)
   NAPI_EXPORT_FUNCTION(fuse_native_signal_setattr_x)
+  NAPI_EXPORT_FUNCTION(fuse_native_signal_chflags)
 
   NAPI_EXPORT_UINT32(op_getattr)
   NAPI_EXPORT_UINT32(op_init)
@@ -1070,4 +1081,5 @@ NAPI_INIT() {
   NAPI_EXPORT_UINT32(op_mkdir)
   NAPI_EXPORT_UINT32(op_rmdir)
   NAPI_EXPORT_UINT32(op_setattr_x)
+  NAPI_EXPORT_UINT32(op_chflags)
 }

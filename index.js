@@ -132,6 +132,9 @@ const OpcodesAndDefaults = new Map([
   ['setattr_x', {
     op: binding.op_setattr_x
   }],
+  ['chflags', {
+    op: binding.op_chflags
+  }],
 ])
 
 class Fuse extends Nanoresource {
@@ -645,6 +648,11 @@ class Fuse extends Nanoresource {
     const bktime = getDoubleArg(bktimeLow, bktimeHigh)
 
     this.ops.setattr_x(path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime, err => {
+      return signal(err)
+    })
+  }
+  _op_chflags (signal, path, flags) {
+    this.ops.chflags(path, flags, err => {
       return signal(err)
     })
   }

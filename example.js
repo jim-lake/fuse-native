@@ -1,10 +1,10 @@
 const Fuse = require('./')
 
-let g_flags = 2;
+let g_flags = 0;
 
 const ops = {
   readdir: function (path, cb) {
-    console.log('readdir(%s)', path)
+    //console.log('readdir(%s)', path)
     if (path === '/') return process.nextTick(cb, 0, ['test'], [
       {
         mtime: new Date(),
@@ -25,7 +25,7 @@ const ops = {
   },
   */
   getattr: function (path, cb) {
-    console.log('getattr(%s)', path)
+    //console.log('getattr(%s)', path)
     if (path === '/') {
       return process.nextTick(cb, 0, {
         mtime: new Date(),
@@ -63,6 +63,7 @@ const ops = {
 
     return process.nextTick(cb, Fuse.ENOENT)
   },
+  /*
   setattr_x: function(path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime, cb) {
     console.log('setattr_x:', path, mode, uid, gid, flags, size, modtime, acctime, crtime, chgtime, bktime);
     if (flags !== undefined) {
@@ -70,8 +71,16 @@ const ops = {
     }
     return process.nextTick(cb, 0);
   },
+  */
+
+  chflags: function (path, flags, cb) {
+    console.log("chflags:", flags);
+    g_flags = flags;
+    return process.nextTick(cb, 0)
+  },
+
   open: function (path, flags, cb) {
-    console.log('open(%s, %d)', path, flags)
+    //console.log('open(%s, %d)', path, flags)
     return process.nextTick(cb, 0, 42) // 42 is an fd
   },
   read: function (path, fd, buf, len, pos, cb) {
@@ -80,7 +89,15 @@ const ops = {
     if (!str) return process.nextTick(cb, 0)
     buf.write(str)
     return process.nextTick(cb, str.length)
-  }
+  },
+  truncate: function(path, len, cb) {
+    console.log("truncate:", path, len)
+    return process.nextTick(cb, 0)
+  },
+  ftruncate: function(path, fd, len, cb) {
+    console.log("ftruncate:", path, fd, len)
+    return process.nextTick(cb, 0)
+  },
 }
 
 const fuse = new Fuse('./mnt', ops, { debug: false, displayFolder: true })

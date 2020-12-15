@@ -186,6 +186,7 @@ class Fuse extends Nanoresource {
     if (this.opts.fd) options.push('fd=' + this.opts.fd)
     if (this.opts.userId) options.push('user_id=', this.opts.userId)
     if (this.opts.fsname) options.push('fsname=' + this.opts.fsname)
+    if (this.opts.fstypename) options.push('fstypename=' + this.opts.fstypename)
     if (this.opts.subtype) options.push('subtype=' + this.opts.subtype)
     if (this.opts.kernelCache) options.push('kernel_cache')
     if (this.opts.autoCache) options.push('auto_cache')
